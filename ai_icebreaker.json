@@ -1,0 +1,504 @@
+{
+  "name": "Agente Icebreaker - Conseguir Clientes",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "={{ $json.Web }}",
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1552,
+        352
+      ],
+      "id": "eed6156e-7da6-4fa1-a40f-2a8fcdbf4abc",
+      "name": "Scrape Company URLs",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "maxItems": 5
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        352
+      ],
+      "id": "a9ae0c28-e9b3-42ab-bcaa-213234d3159c",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Este código filtra los items que tengan el campo 'Email' relleno\nreturn items.filter(item => {\n  const correo = item.json.Email;\n  return correo && correo.trim() !== '';\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        96
+      ],
+      "id": "c04b206c-f01e-4aae-ac5b-a98d7408c2be",
+      "name": "Filtrar los que tienen correo"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fb6979ad-b631-408e-b42b-8f2401b39c1c",
+              "name": "correo",
+              "value": "={{ $('Filtrar los que tienen correo').item.json.Email }}",
+              "type": "string"
+            },
+            {
+              "id": "0e20e236-c41d-4c2a-845b-cc520b83d8fd",
+              "name": "web",
+              "value": "={{ $('Filtrar los que tienen correo').item.json.Web }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2144,
+        368
+      ],
+      "id": "27b67b99-93d3-4042-8f89-aac19c32a549",
+      "name": "Mapeo correo - web"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1840,
+        352
+      ],
+      "id": "78bcb7cf-082d-4aa7-98bd-ae495e40bfc4",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Filtrar los que tienen correo').item.json.Email }}",
+        "subject": "={{ $json.message.content.ASUNTO }}",
+        "message": "={{ $json.message.content.HTML }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        3104,
+        160
+      ],
+      "id": "982f4a01-f06e-427b-903c-afa7964b84a7",
+      "name": "Gmail",
+      "webhookId": "fe5ad01a-4fcd-47da-a355-162292216374",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "y2pyRMOvw3uKRoO9",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const html = $('Loop Over Items').first().json.data || '';\n\n// Limpieza del texto visible\nconst clean = html\n  .replace(/<script[\\s\\S]*?>[\\s\\S]*?<\\/script>/gi, '')\n  .replace(/<style[\\s\\S]*?>[\\s\\S]*?<\\/style>/gi, '')\n  .replace(/<\\/?[^>]+(>|$)/g, '') // eliminar etiquetas HTML\n  .slice(0, 3000); // limitar longitud\n\n// Extracción de colores\nconst colorRegex = /(#(?:[0-9a-f]{3}){1,2}|rgb\\([^)]+\\)|rgba\\([^)]+\\))/gi;\nconst colores = html.match(colorRegex) || [];\n\nreturn [{\n  json: {\n    cleanText: clean,\n    colores: colores\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        368
+      ],
+      "id": "039f0f81-8b1f-40de-9d4e-9fdc66c1449f",
+      "name": "Limpiar codigo + colores"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=info web: {{ $json.cleanText }}"
+            },
+            {
+              "content": "=Actúa como Iago, un estudiante de Ingeniería Informática que ha desarrollado un asistente de WhatsApp con IA para gestionar citas automáticamente en salones de belleza y uñas. Tu tarea es generar un email icebreaker breve, cercano y personalizado para un negocio de este sector.\n\nVas a recibir información extraída de la web del negocio y los colores que usa, para personalizar el mensaje.\n\n### Objetivo:\nCaptar la atención desde la primera línea, sonar humano y cercano (no corporativo ni robótico), y conseguir que el negocio responda con interés en ver una demo en vídeo.\n\n### Contexto real (verdadero, no exageres ni inventes ni prometas nada no mencionado aquí):\nIago ha construido un bot de WhatsApp con IA que responde a clientes, consulta disponibilidad en Google Calendar, agenda citas automáticamente, y manda recordatorios el día antes de cada cita. Lo está ofreciendo para probar sin compromiso ahora mismo, sin coste. No prometas nada sobre precios futuros ni condiciones a largo plazo — eso se habla directamente con Iago si el negocio muestra interés real, no en este primer email.\n\n### Requisitos de contenido:\n- Breve (5-7 frases máximo).\n- Tono cercano, en primera persona, tuteando.\n- Menciona algo específico y real de la web del negocio (no genérico) para mostrar que Iago se ha tomado la molestia de mirarlo.\n- No exagerar ni prometer resultados, precios o condiciones que no se han confirmado en este contexto.\n- Termina invitando a ver un vídeo corto de demostración, sin presión.\n- Firma como \"Iago\" — sin mencionar ninguna empresa, porque es un proyecto personal de un estudiante, no una empresa.\n\n### Requisitos de diseño del HTML:\n- Minimalista y con mucho espacio en blanco (padding generoso, mínimo 24px).\n- Usa como máximo UN color de acento (elige el más armonioso y profesional de los colores reales de la web, o un azul/verde neutro si los de la web no son adecuados para email) — no mezcles varios colores de acento distintos.\n- Tipografía: 'Helvetica, Arial, sans-serif', tamaño de texto base 16px, con buen interlineado (line-height: 1.6).\n- Los dos botones de contacto deben ir en un contenedor con `display: flex; gap: 20px;` (usa exactamente esta propiedad `gap` con un valor de al menos 20px, no uses margin para separarlos). Deben ser del mismo color de fondo (una versión clara del color de acento elegido), con texto oscuro y buen contraste, bordes redondeados (border-radius: 8px).\n- Evita fondos oscuros o muy saturados; el fondo del email debe ser blanco o gris muy claro (#fafafa o similar).\n- No uses más de un tamaño de fuente para el cuerpo del texto — mantén todo el texto principal al mismo tamaño, y usa solo negrita (no cursiva ni subrayado) para dar énfasis si hace falta.\n- Incluye DOS botones de contacto, uno junto al otro: uno que diga \"Escríbeme por email\" enlazando a mailto:iago.martinez.abalo@gmail.com, y otro que diga \"Escríbeme por WhatsApp\" enlazando a https://wa.me/34684078017.\n\n### Formato de salida:\n- [HTML] simple y limpio para email, con el mensaje y los dos botones de contacto.\n- [ASUNTO] corto y natural, sin sonar a spam.\n- Nombra las salidas exactamente como \"HTML\" y \"ASUNTO\".\n\nGenera el icebreaker para el negocio cuya información se ha proporcionado arriba.",
+              "role": "system"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        2640,
+        368
+      ],
+      "id": "016d776e-42e4-4b00-8331-067c487ee52d",
+      "name": "Agente creador de Email IceBreaker",
+      "credentials": {
+        "openAiApi": {
+          "id": "EpZw0wph2liaXjfy",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        976,
+        96
+      ],
+      "id": "7a7206b6-d10f-4b39-91cd-87606b900741",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "182zxdKful2rJLf5nGJ97okevc8DjfyAqZbE3lCc5_Og",
+          "mode": "list",
+          "cachedResultName": "Leads Salones de Belleza",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/182zxdKful2rJLf5nGJ97okevc8DjfyAqZbE3lCc5_Og/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/182zxdKful2rJLf5nGJ97okevc8DjfyAqZbE3lCc5_Og/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Estado",
+              "lookupValue": "Sin contactar"
+            },
+            {
+              "lookupColumn": "Email enviado",
+              "lookupValue": "Sin enviar"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1152,
+        96
+      ],
+      "id": "d0015621-9f71-41a4-8971-364f10cfc442",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QpRjVWHgoUqRG6ah",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "182zxdKful2rJLf5nGJ97okevc8DjfyAqZbE3lCc5_Og",
+          "mode": "list",
+          "cachedResultName": "Leads Salones de Belleza",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/182zxdKful2rJLf5nGJ97okevc8DjfyAqZbE3lCc5_Og/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/182zxdKful2rJLf5nGJ97okevc8DjfyAqZbE3lCc5_Og/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Icebreaker enviado": "={{ $json.message.content.HTML }}",
+            "Direccion": "={{ $('Filtrar los que tienen correo').item.json.Direccion }}",
+            "Email enviado": "Enviado"
+          },
+          "matchingColumns": [
+            "Direccion"
+          ],
+          "schema": [
+            {
+              "id": "Nombre",
+              "displayName": "Nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Telefono",
+              "displayName": "Telefono",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Web",
+              "displayName": "Web",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Direccion",
+              "displayName": "Direccion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Email enviado",
+              "displayName": "Email enviado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Icebreaker enviado",
+              "displayName": "Icebreaker enviado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3104,
+        368
+      ],
+      "id": "812102b8-bf92-4173-9d61-71686ae9e247",
+      "name": "Google sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QpRjVWHgoUqRG6ah",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Scrape Company URLs": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Scrape Company URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar los que tienen correo": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mapeo correo - web": {
+      "main": [
+        [
+          {
+            "node": "Limpiar codigo + colores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Mapeo correo - web",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limpiar codigo + colores": {
+      "main": [
+        [
+          {
+            "node": "Agente creador de Email IceBreaker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente creador de Email IceBreaker": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Filtrar los que tienen correo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google sheets": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "71d713d6-5368-4674-b5c0-9b356dca5b73",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e0c5a9afc2d357cc419e092b53be61c03737367c20920c0a2604bb99207908c6"
+  },
+  "nodeGroups": [],
+  "id": "r0WZHckpQt97jGEq",
+  "tags": [
+    {
+      "updatedAt": "2026-08-06T11:33:12.290Z",
+      "createdAt": "2026-08-06T11:33:12.290Z",
+      "id": "GzPORxyKeHvg46DX",
+      "name": "Curso Adrián Sáenz"
+    }
+  ]
+}

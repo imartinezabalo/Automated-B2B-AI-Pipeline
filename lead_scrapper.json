@@ -1,0 +1,542 @@
+{
+  "name": "Agente Encontrar Negocios",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1904,
+        1648
+      ],
+      "id": "88c4aed5-b837-42e5-81f4-bdcbe663c534",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "maxItems": 150
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        1072,
+        1648
+      ],
+      "id": "ff056bd5-a6ee-4223-b600-5525870cf90e",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "182zxdKful2rJLf5nGJ97okevc8DjfyAqZbE3lCc5_Og",
+          "mode": "list",
+          "cachedResultName": "Leads Salones de Belleza",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/182zxdKful2rJLf5nGJ97okevc8DjfyAqZbE3lCc5_Og/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/182zxdKful2rJLf5nGJ97okevc8DjfyAqZbE3lCc5_Og/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Nombre": "={{ $json.displayName.text }}",
+            "Telefono": "={{ $json.nationalPhoneNumber }}",
+            "Web": "={{ $json.websiteUri }}",
+            "Direccion": "={{ $json.formattedAddress }}",
+            "Estado": "Sin contactar"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Nombre",
+              "displayName": "Nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Telefono",
+              "displayName": "Telefono",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Web",
+              "displayName": "Web",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Direccion",
+              "displayName": "Direccion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2352,
+        1648
+      ],
+      "id": "d7b3764f-3acd-43fa-86fd-beb4cbb399eb",
+      "name": "Google Sheets2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QpRjVWHgoUqRG6ah",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 🌐 Scraping de negocios locales por nicho y ciudad\n\nEste flujo automatiza la extracción de URLs de negocios desde **Google Maps**,\nen función de los datos generados por un agente GPT que define el nicho (tipo de negocio) y la ciudad.\n\n### 🧩 Descripción del flujo paso a paso:\n\n1. **Schedule Trigger**  \n   Activa el flujo de forma automática en el horario que\ndefinamos (diariamente, semanal, etc.).\n\n2. **OpenAI (Message Model)**  \n   El agente genera una búsqueda como:  \n   `\"Búscame clínicas dentales en Valencia\"`  \n   Esta frase define el **nicho** y la **ciudad** para el scraping.\n\n3. **Edit Fields**  \n   Se ajustan los campos necesarios para trabajar la frase generada por el agente.\n\n4. **Code (Parser)**  \n   Separamos y estructuramos la frase del agente para obtener dos variables: `nicho` y `ciudad`.\n\n5. **Construir URL**  \n   Creamos una URL de búsqueda de Google Maps basada en esas variables:  \n   `https://www.google.com/maps/search/{nicho}+en+{ciudad}`\n\n6. **Scrape Google Maps**  \n   Usamos esa URL para hacer scraping de resultados de negocios directamente desde Google Maps.\n\n7. **Extract URLs**  \n   Extraemos las URLs individuales de los resultados de Google Maps.\n\n8. **Filter**  \n   Aplicamos un filtro para asegurarnos de que solo se pasen URLs válidas o relevantes (por ejemplo, que contengan \"http\", o sean de ficha de negocio).\n\n9. **Remove Duplicates**  \n   Eliminamos URLs duplicadas para asegurar resultados únicos.\n\n10. **Limit**  \n   Limitamos el número de resultados (por ejemplo, a 10) para controlar la carga y mantener eficiencia en el procesamiento posterior.\n\n---\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n### ✅ Resultado:\nEl flujo devuelve una lista de sitios web reales y locales, filtrados y únicos, listos para usar en campañas, análisis o automatización comercial.\n\n**Hecho con ❤️ por [Juan Pe Navarro](https://www.youtube.com/@juanpe.divisual)**\n",
+        "height": 1880,
+        "width": 1240,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "046445dd-8290-4c34-8a1e-3df1d3b175c4",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# 📩 Extracción y almacenamiento de emails\n\nEste flujo toma las URLs de empresas extraídas en la fase anterior y realiza scraping en cada una para localizar direcciones de correo electrónico, que luego se almacenan en Google Sheets para su posterior uso.\n\n---\n\n# 🧠 Descripción del proceso:\n\n➡️ **Loop Over Items**  \n🔁 Recorre una por una las URLs recopiladas anteriormente.\n\n➡️ **Scrape Company URLs**  \n🌐 Accede a cada sitio web de empresa para obtener su contenido HTML.\n\n➡️ **Wait**  \n⏱ Añade una pausa entre solicitudes para evitar bloqueos por parte de los servidores web.\n\n➡️ **Extract Emails**  \n📧 Escanea el contenido del sitio para localizar y extraer direcciones de email válidas.\n\n➡️ **Remove Duplicates2**  \n🧹 Elimina correos duplicados en caso de encontrar varios repetidos en el mismo sitio.\n\n➡️ **Google Sheets2**  \n📊 Almacena los resultados (URL + email) en una hoja de cálculo de Google Sheets, lista para uso comercial, contacto o análisis.\n\n---\n\nEste módulo cierra el ciclo de scraping automatizado, entregando una base de datos lista para aprovechar con leads locales y cualificados.",
+        "height": 1880,
+        "width": 1200
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1312,
+        0
+      ],
+      "id": "38512d13-95c0-42d5-80ef-ce3fa71a7f02",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "compare": "selectedFields",
+        "fieldsToCompare": "formattedAddress",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        1072,
+        1392
+      ],
+      "id": "5e38c24a-5335-4853-b41a-34388fef343d",
+      "name": "Borrar duplicados"
+    },
+    {
+      "parameters": {
+        "content": "## Plantilla Google Sheet\n[Click aqui](https://docs.google.com/spreadsheets/d/1xUzEgPtPdGVEAsMQ-loiTd5zUCnglGsAPxGw2y1u6O4/edit?gid=0#gid=0)",
+        "height": 120
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2512,
+        1408
+      ],
+      "id": "b8d8cccc-d15d-42ef-82f4-0b8df87b9d91",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "# 🚀 La Tribu Divisual\n\n## Este agente tiene un valor en el mercado de **$4.500.**\n\n\n## Accede a **La Tribu Divisual** para aprender a crear agentes más avanzados y a generar altos ingresos con ellos de forma real y segura.\n\n# 👉 [Click aquí para unirte a la Lista de espera](https://divisualproject.academy/)\n",
+        "height": 360,
+        "width": 760,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2512,
+        1520
+      ],
+      "id": "21ca5fd4-3e2f-4407-b3f0-4a5d9696ab77",
+      "name": "Sticky Note10"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        880,
+        368
+      ],
+      "id": "0e2c4ac7-b59b-432f-9e5d-fa42d8faa8b9",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://places.googleapis.com/v1/places:searchText",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Goog-Api-Key",
+              "value": "YOUR_API_KEY_HERE"
+            },
+            {
+              "name": "X-Goog-FieldMask",
+              "value": "places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.rating,places.regularOpeningHours,places.websiteUri,places.types"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ textQuery: $json.niche + \" en \" + $json.city, locationBias: { circle: { center: { latitude: $json.lat, longitude: $json.lng }, radius: 20000.0 } } }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        784,
+        992
+      ],
+      "id": "c6bb534e-cf95-4d07-8994-ad36bf944650",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "places",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        624,
+        1392
+      ],
+      "id": "1a08e40d-e8a5-4faa-b6f4-aedc56e95dbc",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "182zxdKful2rJLf5nGJ97okevc8DjfyAqZbE3lCc5_Og",
+          "mode": "list",
+          "cachedResultName": "Leads Salones de Belleza",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/182zxdKful2rJLf5nGJ97okevc8DjfyAqZbE3lCc5_Og/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/182zxdKful2rJLf5nGJ97okevc8DjfyAqZbE3lCc5_Og/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        992,
+        1808
+      ],
+      "id": "a59fee88-3c1d-4ce0-8e21-ab8fc63adbe9",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "QpRjVWHgoUqRG6ah",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// Separamos: los que vienen del scraping tienen \"formattedAddress\", los de la hoja tienen \"Direccion\"\nconst nuevos = items.filter(item => item.json.formattedAddress);\nconst existentes = items.filter(item => item.json.Direccion).map(item => item.json.Direccion);\n\nreturn nuevos.filter(item => !existentes.includes(item.json.formattedAddress));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        1648
+      ],
+      "id": "762342ea-9b91-4aee-9db5-23ec206cbfaf",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1296,
+        1712
+      ],
+      "id": "1a38cccb-aad7-4202-8dc4-07b91e6bf73b",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c1ba9151-5737-4cec-aa2b-203627e8a8d5",
+              "leftValue": "={{ $json.types }}",
+              "rightValue": "nail_salon",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "121bcaf2-46f2-4f6c-b2b4-64ab37211d7b",
+              "leftValue": "={{ $json.types }}",
+              "rightValue": "beauty_salon",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        848,
+        1392
+      ],
+      "id": "f6e86a98-3f83-42ab-a7e6-4a848450aedf",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ciudades = [\n  { city: \"Madrid\", lat: 40.4168, lng: -3.7038 },\n  { city: \"Barcelona\", lat: 41.3851, lng: 2.1734 },\n  { city: \"Valencia\", lat: 39.4699, lng: -0.3763 },\n  { city: \"Sevilla\", lat: 37.3891, lng: -5.9845 },\n  { city: \"Zaragoza\", lat: 41.6488, lng: -0.8891 },\n  { city: \"Málaga\", lat: 36.7213, lng: -4.4214 },\n  { city: \"Murcia\", lat: 37.9922, lng: -1.1307 },\n  { city: \"Palma de Mallorca\", lat: 39.5696, lng: 2.6502 },\n  { city: \"Bilbao\", lat: 43.2630, lng: -2.9350 },\n  { city: \"Alicante\", lat: 38.3452, lng: -0.4810 },\n  { city: \"Córdoba\", lat: 37.8882, lng: -4.7794 },\n  { city: \"Valladolid\", lat: 41.6523, lng: -4.7245 },\n  { city: \"Vitoria-Gasteiz\", lat: 42.8467, lng: -2.6716 },\n  { city: \"Gijón\", lat: 43.5322, lng: -5.6611 },\n  { city: \"Granada\", lat: 37.1773, lng: -3.5986 },\n  { city: \"Oviedo\", lat: 43.3603, lng: -5.8448 },\n  { city: \"Badajoz\", lat: 38.8794, lng: -6.9707 },\n  { city: \"Salamanca\", lat: 40.9701, lng: -5.6635 },\n  { city: \"A Coruña\", lat: 43.3623, lng: -8.4115 },\n  { city: \"Vigo\", lat: 42.2406, lng: -8.7207 },\n  { city: \"Pontevedra\", lat: 42.4310, lng: -8.6444 },\n  { city: \"Ourense\", lat: 42.3358, lng: -7.8639 },\n  { city: \"Lugo\", lat: 43.0121, lng: -7.5560 },\n  { city: \"Ferrol\", lat: 43.4832, lng: -8.2369 },\n  { city: \"Pamplona\", lat: 42.8125, lng: -1.6458 },\n  { city: \"Logroño\", lat: 42.4627, lng: -2.4449 },\n  { city: \"Santander\", lat: 43.4623, lng: -3.8099 },\n  { city: \"León\", lat: 42.5987, lng: -5.5671 },\n  { city: \"Burgos\", lat: 42.3439, lng: -3.6969 },\n  { city: \"Tarragona\", lat: 41.1189, lng: 1.2445 },\n  { city: \"Girona\", lat: 41.9794, lng: 2.8214 },\n  { city: \"Cádiz\", lat: 36.5271, lng: -6.2886 },\n  { city: \"Jerez de la Frontera\", lat: 36.6850, lng: -6.1261 },\n  { city: \"Almería\", lat: 36.8381, lng: -2.4597 },\n  { city: \"Castellón de la Plana\", lat: 39.9864, lng: -0.0513 },\n  { city: \"Toledo\", lat: 39.8628, lng: -4.0273 }\n];\n\nreturn ciudades.map(c => ({\n  json: {\n    niche: \"salón de uñas\",\n    city: c.city,\n    lat: c.lat,\n    lng: c.lng\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        368
+      ],
+      "id": "74fa9e8e-f29a-4a13-b223-92b918831d38",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Google Sheets2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Borrar duplicados": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Borrar duplicados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "9aabf421-e1bc-4a70-b69a-f88760bdd64f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e0c5a9afc2d357cc419e092b53be61c03737367c20920c0a2604bb99207908c6"
+  },
+  "nodeGroups": [],
+  "id": "0iqEmKTUhNDatFU8",
+  "tags": [
+    {
+      "updatedAt": "2026-08-06T11:33:12.287Z",
+      "createdAt": "2026-08-06T11:33:12.287Z",
+      "id": "4Ov3iTfDBMUgY52p",
+      "name": "La Tribu Divisual"
+    },
+    {
+      "updatedAt": "2026-08-06T11:33:12.290Z",
+      "createdAt": "2026-08-06T11:33:12.290Z",
+      "id": "GzPORxyKeHvg46DX",
+      "name": "Curso Adrián Sáenz"
+    }
+  ]
+}
